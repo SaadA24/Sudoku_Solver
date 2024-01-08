@@ -1,77 +1,95 @@
-#include <iostream>
-#include <vector>
-#include <algorithm>
 #include <unordered_map>
 #include <unordered_set>
+#include <algorithm>
+#include <iostream>
+#include <vector>
+#include <array>
 
-std::vector<std::vector<int>> split_into_subgrids(std::vector<std::vector<int>> sudoku) {
-    std::vector<std::vector<int>> subgrids;
-    for (int box_row = 0; box_row < 3; box_row++) {
-        for (int box_col = 0; box_col < 3; box_col++) {
-            std::vector<int> subgrid;
-            for (int row = 0; row < 3; row++) {
-                for (int col = 0; col < 3; col++) {
-                    subgrid.push_back(sudoku[3 * box_row + row][3 * box_col + col]);
+// Split Sudoku board into 3x3 subgrads from left to right
+
+std::vector<std::vector<int>> splitSudokuBoardIntoSubgrids(const std::vector<std::vector<int>>& sudokuBoard) {
+
+    std::vector<std::vector<int>> allSubgrids;
+    std::vector<int> eachSubgrid;
+
+    for (int allSubgridBoxRows = 0; allSubgridBoxRows < 3; allSubgridBoxRows++) {
+        for (int allsubgridBoxColumns = 0; allsubgridBoxColumns < 3; allsubgridBoxColumns++) {
+            for (int eachSubgridRow = 0; eachSubgridRow < 3; eachSubgridRow++) {
+                for (int eachSubgrodColumn = 0; eachSubgrodColumn < 3; eachSubgrodColumn++) {
+                    eachSubgrid.push_back(sudokuBoard[3 * allSubgridBoxRows + eachSubgridRow][3 * allsubgridBoxColumns + eachSubgrodColumn]);
                 }
             }
-            subgrids.push_back(subgrid);
+            allSubgrids.push_back(eachSubgrid);
         }
     }
-    return subgrids;
+    return allSubgrids;
 }
 
-bool is_valid_board(std::vector<std::vector<int>>& sudoku) {
-    std::vector<std::vector<int>> subgrids = split_into_subgrids(sudoku);
+// Check duplicates in the board that break the Sudoku rules
+
+bool checkDuplicates(std::vector<std::vector<int>>& sudokuBoard) {
+
+    std::vector<int> subGridRowDuplicates;
+    std::vector<int> subGridColumnDuplicates;
+    std::vector<int> individualSubGridDuplicates;
+    std::unordered_map<int, int> eachSubGridRow;
+    std::unordered_map<int, int> eachSubGridColumn;
+    std::unordered_map<int, int> eachIndividualSubGrid;
+
+    std::vector<std::vector<int>> eachSubGrid = splitSudokuBoardIntoSubgrids(sudokuBoard);
+
+    //Loop through each board row, board column and 3x3 subgrid
     for (int i = 0; i < 9; i++) {
-        std::vector<int> duplicates_row;
-        std::vector<int> duplicates_col;
-        std::vector<int> duplicates_3x3;
-        std::unordered_map<int, int> counter_row;
-        std::unordered_map<int, int> counter_col;
-        std::unordered_map<int, int> counter_3x3;
         
+        // Count occurrences of numbers in each subGridrow, subGridColumn, and 3x3 subgrid
         for (int j = 0; j < 9; j++) {
-            counter_row[sudoku[i][j]]++;
-            counter_col[sudoku[j][i]]++;
-            counter_3x3[subgrids[i][j]]++;
+            eachSubGridRow[sudokuBoard[i][j]]++;
+            eachSubGridColumn[sudokuBoard[j][i]]++;
+            eachIndividualSubGrid[eachSubGrid[i][j]]++;
         }
-        
-        for (auto it = counter_row.begin(); it != counter_row.end(); it++) {
-            if (it->second > 1) {
-                duplicates_row.push_back(it->first);
+
+        // Identify duplicates in the current row
+        for (auto iterator = eachSubGridRow.begin(); iterator != eachSubGridRow.end(); iterator++) {
+            if (iterator->second > 1) {
+                subGridRowDuplicates.push_back(iterator->first);
             }
         }
-        
-        for (auto it = counter_col.begin(); it != counter_col.end(); it++) {
-            if (it->second > 1) {
-                duplicates_col.push_back(it->first);
+
+        // Identify duplicates in the current column
+        for (auto iterator = eachSubGridColumn.begin(); iterator != eachSubGridColumn.end(); iterator++) {
+            if (iterator->second > 1) {
+                subGridColumnDuplicates.push_back(iterator->first);
             }
         }
-        
-        for (auto it = counter_3x3.begin(); it != counter_3x3.end(); it++) {
-            if (it->second > 1) {
-                duplicates_3x3.push_back(it->first);
+
+        // Identify duplicates in the current 3x3 subgrid
+        for (auto iterator = eachIndividualSubGrid.begin(); iterator != eachIndividualSubGrid.end(); iterator++) {
+            if (iterator->second > 1) {
+                individualSubGridDuplicates.push_back(iterator->first);
             }
         }
-        
-        if (std::unique(sudoku[i].begin(), sudoku[i].end()) != sudoku[i].end()) {
-            if (std::find(duplicates_row.begin(), duplicates_row.end(), 0) != duplicates_row.end()) {
+
+        // Check rows for duplicates
+        if (std::unique(sudokuBoard[i].begin(), sudokuBoard[i].end()) != sudokuBoard[i].end()) {
+            if (std::find(subGridRowDuplicates.begin(), subGridRowDuplicates.end(), 0) != subGridRowDuplicates.end()) {
                 return true;
             } else {
                 return false;
             }
         }
         
-        if (std::unique(sudoku[i].begin(), sudoku[i].end()) != sudoku[i].end()) {
-            if (std::find(duplicates_col.begin(), duplicates_col.end(), 0) != duplicates_col.end()) {
+        // check columns for duplicates
+        if (std::unique(sudokuBoard[i].begin(), sudokuBoard[i].end()) != sudokuBoard[i].end()) {
+            if (std::find(subGridColumnDuplicates.begin(), subGridColumnDuplicates.end(), 0) != subGridColumnDuplicates.end()) {
                 return true;
             } else {
                 return false;
             }
         }
-        
-        if (std::unique(subgrids[i].begin(), subgrids[i].end()) != subgrids[i].end()) {
-            if (std::find(duplicates_3x3.begin(), duplicates_3x3.end(), 0) != duplicates_3x3.end()) {
+
+        // check 3x3 for duplicates
+        if (std::unique(eachSubGrid[i].begin(), eachSubGrid[i].end()) != eachSubGrid[i].end()) {
+            if (std::find(individualSubGridDuplicates.begin(), individualSubGridDuplicates.end(), 0) != individualSubGridDuplicates.end()) {
                 return true;
             } else {
                 return false;
@@ -81,18 +99,36 @@ bool is_valid_board(std::vector<std::vector<int>>& sudoku) {
     return true;
 }
 
-bool is_valid_move(std::vector<std::vector<int>> grid, int row, int col, int n) {
-    int s_row = (row / 3) * 3;
-    int s_col = (col / 3) * 3;
+bool subGridValidGuess(std::vector<std::vector<int>> eachSubgrid, int subGridRow, int subGridColumn, int subGridInputGuess) {
+    int allSudokuBoardRows = (subGridRow / 3) * 3;
+    int allSudokuBoardColumns = (subGridColumn / 3) * 3;
     for (int i = 0; i < 9; i++) {
-        if (grid[row][i] == n) {
+        if (eachSubgrid[subGridRow][i] == subGridInputGuess) {
             return false;
         }
-        if (grid[i][col] == n) {
+        if (eachSubgrid[i][subGridColumn] == subGridInputGuess) {
             return false;
         }
-        if (grid[s_row + (i / 3)][s_col + (i % 3)] == n) {
+        if (eachSubgrid[subGridRow + (i / 3)][subGridColumn + (i % 3)] == subGridInputGuess) {
             return false;
+        }
+    }
+    return true;
+}
+
+bool sudokoBoardValidGuess(const std::array<std::array<int, 9>, 9>& sudokuBoard, int sudokuBoardRow, int sudokuBoardColumn, int SudokuBoardInputGuess) {
+    for (int i = 0; i < 9; i++) {
+        if (sudokuBoard[sudokuBoardRow][i] == SudokuBoardInputGuess || sudokuBoard[i][sudokuBoardColumn] == SudokuBoardInputGuess) {
+            return false;
+        }
+    }
+    int allSudokuBoardRows = (sudokuBoardRow / 3) * 3;
+    int allSudokuBoardColumns = (sudokuBoardColumn / 3) * 3;
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            if (sudokuBoard[allSudokuBoardRows + i][allSudokuBoardColumns + j] == SudokuBoardInputGuess) {
+                return false;
+            }
         }
     }
     return true;
@@ -146,23 +182,7 @@ std::unordered_set<int> digit_options(const std::array<std::array<int, 9>, 9>& b
 
 // type 2
 
-bool is_valid_move(std::array<std::array<int, 9>, 9>& board, int row, int col, int num) {
-    for (int i = 0; i < 9; i++) {
-        if (board[row][i] == num || board[i][col] == num) {
-            return false;
-        }
-    }
-    int s_row = (row / 3) * 3;
-    int s_col = (col / 3) * 3;
-    for (int i = 0; i < 3; i++) {
-        for (int j = 0; j < 3; j++) {
-            if (board[s_row + i][s_col + j] == num) {
-                return false;
-            }
-        }
-    }
-    return true;
-}
+
 
 bool make_move(std::array<std::array<int, 9>, 9>& board) {
     for (int row = 0; row < 9; row++) {
@@ -196,7 +216,7 @@ void invalid_board_marker(std::vector<std::vector<int>>& sudoku) {
 }
 
 std::vector<std::vector<int>> sudoku_solver(std::vector<std::vector<int>>& sudoku) {
-    if (is_valid_board(sudoku)) {
+    if (checkDuplicates(sudoku)) {
         if (make_move(sudoku)) {
             return sudoku;
         } else {
